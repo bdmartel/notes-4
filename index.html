@@ -4,25 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notes App</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    #notes {
-      margin-top: 20px;
-    }
-    .note {
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-      padding: 10px;
-    }
+  <style>body {
+    font-family: Arial, sans-serif;
+  }
+  
+  #notes {
+    margin-top: 20px;
+  }
+  
+  .note {
+    padding: 20px 10px 30px;
+  }
+  
+  .note:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+  
+  .note:nth-child(2n) {
+    background-color: #fff;
+  }
   </style>
 </head>
 <body>
   <h1>Notes App</h1>
   <form id="noteForm">
-    <textarea id="noteContent" rows="4" cols="50" placeholder="Write your note here"></textarea><br>
-    <button type="submit">Add Note</button>
+    <div id="noteContent" contenteditable="true" style="border: 1px solid #ccc; padding: 8px; min-height: 50px;">
+      
+    </div>
+        <button type="submit">Add Note</button>
   </form>
   <div id="notes">
     <h2>All Notes</h2>
