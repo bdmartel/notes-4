@@ -1,71 +1,52 @@
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs/promises');
-const path = require('path');
+const express = require("express");
+const cors = require("cors");
+const fs = require("fs/promises");
+const path = require("path");
 
 const app = express();
 const PORT = 3000;
 
-// Configure CORS
-const corsOptions = {
-    origin: 'http://localhost:1234',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-};
-app.use(cors(corsOptions));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Basic route
-app.get('/', (req, res) => {
-    res.send('Server is running!');
-});
+// File path for notes storage
+const dataFilePath = path.join(__dirname, "notes.json");
 
-const dataFilePath = path.join(__dirname, 'notes.json');
-
-// Route to fetch all notes
-app.get('/notes', async (req, res) => {
+// Fetch all notes
+app.get("/notes", async (req, res) => {
     try {
-        const fileExists = await fs.access(dataFilePath).then(() => true).catch(() => false);
-        if (!fileExists) return res.json([]);
-        const notes = JSON.parse(await fs.readFile(dataFilePath, 'utf-8'));
+        const notes = JSON.parse(await fs.readFile(dataFilePath, "utf-8"));
         res.json(notes);
     } catch (error) {
-        console.error('Error reading notes:', error);
-        res.status(500).json({ error: 'Could not fetch notes' });
+        console.error("Error reading notes:", error);
+        res.status(500).json({ error: "Could not fetch notes" });
     }
 });
-// Update notes array
-app.put("/notes", async (req, res) => {
-    const updatedNotes = req.body;
-  
-    try {
-      await fs.writeFile(dataFilePath, JSON.stringify(updatedNotes, null, 2), "utf-8");
-      res.status(200).json({ message: "Notes updated successfully" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Failed to update notes" });
-    }
-  });
-// Route to create a new note
-app.post('/notes', async (req, res) => {
-    const newNote = req.body;
 
-    if (!newNote.title || !newNote.content) {
-        return res.status(400).json({ error: 'Title and content are required' });
-    }
-
+// Add a new note
+app.post("/notes", async (req, res) => {
     try {
-        let notes = [];
-        const fileExists = await fs.access(dataFilePath).then(() => true).catch(() => false);
-        if (fileExists) {
-            notes = JSON.parse(await fs.readFile(dataFilePath, 'utf-8'));
-        }
+        const notes = JSON.parse(await fs.readFile(dataFilePath, "utf-8"));
+        const newNote = req.body;
         notes.push(newNote);
-        await fs.writeFile(dataFilePath, JSON.stringify(notes, null, 2), 'utf-8');
+        await fs.writeFile(dataFilePath, JSON.stringify(notes, null, 2), "utf-8");
         res.status(201).json(newNote);
     } catch (error) {
-        console.error('Error saving note:', error);
-        res.status(500).json({ error: 'Could not save note' });
+        console.error("Error adding note:", error);
+        res.status(500).json({ error: "Could not add note" });
+    }
+});
+
+// Update all notes
+app.put("/notes", async (req, res) => {
+    try {
+        const updatedNotes = req.body;
+        await fs.writeFile(dataFilePath, JSON.stringify(updatedNotes, null, 2), "utf-8");
+        res.status(200).json({ message: "Notes updated successfully" });
+    } catch (error) {
+        console.error("Error updating notes:", error);
+        res.status(500).json({ error: "Could not update notes" });
     }
 });
 
