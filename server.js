@@ -1,20 +1,19 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
 const app = express();
 const PORT = 3000;
 
-// Configure CORS to allow requests from localhost:1234
+// Configure CORS
 const corsOptions = {
     origin: 'http://localhost:1234',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 };
 app.use(cors(corsOptions));
-
-app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.json());
 
 // Basic route
 app.get('/', (req, res) => {
@@ -24,31 +23,39 @@ app.get('/', (req, res) => {
 const dataFilePath = path.join(__dirname, 'notes.json');
 
 // Route to fetch all notes
-app.get('/notes', (req, res) => {
-    if (fs.existsSync(dataFilePath)) {
-        const notes = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+app.get('/notes', async (req, res) => {
+    try {
+        const fileExists = await fs.access(dataFilePath).then(() => true).catch(() => false);
+        if (!fileExists) return res.json([]);
+        const notes = JSON.parse(await fs.readFile(dataFilePath, 'utf-8'));
         res.json(notes);
-    } else {
-        res.json([]);
+    } catch (error) {
+        console.error('Error reading notes:', error);
+        res.status(500).json({ error: 'Could not fetch notes' });
     }
 });
 
 // Route to create a new note
-app.post('/notes', (req, res) => {
+app.post('/notes', async (req, res) => {
     const newNote = req.body;
 
-    if (!newNote || !newNote.content) {
-        return res.status(400).json({ error: 'Note content is required' });
+    if (!newNote.title || !newNote.content) {
+        return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    let notes = [];
-    if (fs.existsSync(dataFilePath)) {
-        notes = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+    try {
+        let notes = [];
+        const fileExists = await fs.access(dataFilePath).then(() => true).catch(() => false);
+        if (fileExists) {
+            notes = JSON.parse(await fs.readFile(dataFilePath, 'utf-8'));
+        }
+        notes.push(newNote);
+        await fs.writeFile(dataFilePath, JSON.stringify(notes, null, 2), 'utf-8');
+        res.status(201).json(newNote);
+    } catch (error) {
+        console.error('Error saving note:', error);
+        res.status(500).json({ error: 'Could not save note' });
     }
-
-    notes.push(newNote);
-    fs.writeFileSync(dataFilePath, JSON.stringify(notes, null, 2), 'utf-8');
-    res.status(201).json(newNote);
 });
 
 // Start the server

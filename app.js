@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const noteForm = document.getElementById("noteForm");
+  const noteTitle = document.getElementById("noteTitle");
   const noteContent = document.getElementById("noteContent");
   const notesContainer = document.getElementById("notesContainer");
 
@@ -12,10 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const notes = await response.json();
       notesContainer.innerHTML = ""; // Clear existing notes
       
-      notes.forEach((note, index) => {
+      // Reverse the notes array to show newest first
+      notes.slice().reverse().forEach((note, index) => {
         const noteDiv = document.createElement("div");
         noteDiv.className = "note";
-        noteDiv.innerHTML = `${index + 1}: ${note.content}`; // Render as formatted text
+        noteDiv.innerHTML = `
+          <h3>${note.title || "Untitled"}</h3>
+          <p>${note.content}</p>
+        `;
         notesContainer.appendChild(noteDiv);
       });
     } catch (error) {
@@ -25,13 +30,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Add a new note
-  const addNote = async (noteInput) => {
-    if (!noteInput.trim()) {
+  const addNote = async (titleInput, contentInput) => {
+    if (!contentInput.trim()) {
       alert("Note content cannot be empty!");
       return;
     }
 
-    const newNote = { content: noteInput }; // Send formatted content
+    const newNote = { title: titleInput.trim() || "Untitled", content: contentInput.trim() };
 
     try {
       const response = await fetch("http://localhost:3000/notes", {
@@ -46,7 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       await fetchNotes(); // Refresh notes
-      noteContent.innerHTML = ""; // Clear the contenteditable field
+      noteTitle.innerHTML = ""; // Clear the title field
+      noteContent.innerHTML = ""; // Clear the content field
     } catch (error) {
       console.error(error);
       alert("An error occurred while adding the note.");
@@ -56,12 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle form submission
   noteForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const note = noteContent.innerHTML.trim(); // Use innerHTML for formatted content
-    if (note) {
-      addNote(note);
-    } else {
-      alert("Note content cannot be empty!");
-    }
+    const title = noteTitle.innerHTML.trim();
+    const content = noteContent.innerHTML.trim();
+    addNote(title, content);
   });
 
   // Initial fetch
