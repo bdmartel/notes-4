@@ -34,7 +34,18 @@ app.get('/notes', async (req, res) => {
         res.status(500).json({ error: 'Could not fetch notes' });
     }
 });
-
+// Update notes array
+app.put("/notes", async (req, res) => {
+    const updatedNotes = req.body;
+  
+    try {
+      await fs.writeFile(dataFilePath, JSON.stringify(updatedNotes, null, 2), "utf-8");
+      res.status(200).json({ message: "Notes updated successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to update notes" });
+    }
+  });
 // Route to create a new note
 app.post('/notes', async (req, res) => {
     const newNote = req.body;
