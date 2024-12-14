@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Notes App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Notes App</h1>
-  <form id="noteForm">
-    <div id="noteTitle" contenteditable="true" placeholder="Write note title here..."></div>
-    <div id="noteContent" contenteditable="true" placeholder="Write your note here..."></div>
-    <button type="submit">Add Note</button>
-  </form>
-  <div id="notes">
-    <h2>All Notes</h2>
+    <h1>Notes App</h1>
+    <form id="noteForm">
+        <input id="noteTitle" type="text" placeholder="Title" required />
+        <textarea id="noteContent" placeholder="Content" required></textarea>
+        <button type="submit">Add Note</button>
+    </form>
     <div id="notesContainer"></div>
-  </div>
-  <script src="app.js" type="module"></script>
+    <script src="app.js"></script>
 </body>
 </html>
