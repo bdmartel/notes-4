@@ -51,8 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       await fetchNotes(); // Refresh notes
-      noteTitle.innerHTML = ""; // Clear the title field
-      noteContent.innerHTML = ""; // Clear the content field
+      noteTitle.value = ""; // Clear the title field
+      noteContent.value = ""; // Clear the content field
     } catch (error) {
       console.error(error);
       alert("An error occurred while adding the note.");
@@ -62,8 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle form submission
   noteForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const title = noteTitle.innerHTML.trim();
-    const content = noteContent.innerHTML.trim();
+    const title = noteTitle.value.trim();
+    const content = noteContent.value.trim();
     addNote(title, content);
   });
 
