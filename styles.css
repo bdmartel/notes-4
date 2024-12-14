@@ -72,3 +72,18 @@ body {
   .note:hover {
     transform: scale(1.02);
   }
+  /* Responsive Design */
+@media (max-width: 640px) {
+    body {
+      padding: 10px;
+    }
+  
+    form, #notes {
+      max-width: 100%;
+      margin: 0 15px; /* Add left-right margins */
+    }
+  
+    #notesContainer {
+      padding: 0 15px; /* Ensure notes have left-right spacing */
+    }
+  }

@@ -72,4 +72,19 @@ button:hover {
 .note:hover {
   transform: scale(1.02);
 }
+
+@media (width <= 640px) {
+  body {
+    padding: 10px;
+  }
+
+  form, #notes {
+    max-width: 100%;
+    margin: 0 15px;
+  }
+
+  #notesContainer {
+    padding: 0 15px;
+  }
+}
 /*# sourceMappingURL=index.1303bb05.css.map */
