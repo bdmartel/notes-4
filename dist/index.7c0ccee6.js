@@ -1,71 +1,88 @@
-// Add listeners for inline editing
-const addEditListeners = ()=>{
-    const editButtons = document.querySelectorAll(".edit-btn");
-    editButtons.forEach((button)=>{
-        button.addEventListener("click", (event)=>{
-            const index = button.dataset.id;
-            const noteDiv = event.target.parentElement;
-            const note = notes[index];
-            // Replace content with textareas
-            noteDiv.innerHTML = `
-        <textarea class="edit-title">${note.title}</textarea>
-        <textarea class="edit-content">${note.content}</textarea>
-        <button class="save-btn">Save</button>
-        <button class="cancel-btn">Cancel</button>
-      `;
-            // Add save and cancel listeners
-            noteDiv.querySelector(".save-btn").addEventListener("click", ()=>saveEdit(noteDiv, index));
-            noteDiv.querySelector(".cancel-btn").addEventListener("click", ()=>cancelEdit(noteDiv, note));
-        });
-    });
-};
-// Save the edited note
-const saveEdit = async (noteDiv, index)=>{
-    const updatedTitle = noteDiv.querySelector(".edit-title").value.trim();
-    const updatedContent = noteDiv.querySelector(".edit-content").value.trim();
-    if (!updatedContent) {
-        alert("Note content cannot be empty!");
-        return;
-    }
-    // Update the note in the array
-    notes[index] = {
-        title: updatedTitle || "Untitled",
-        content: updatedContent
+document.addEventListener("DOMContentLoaded", ()=>{
+    const notesContainer = document.getElementById("notesContainer");
+    const noteForm = document.getElementById("noteForm");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteContent = document.getElementById("noteContent");
+    const API_URL = "http://localhost:3000/notes";
+    // Fetch and display notes
+    const fetchNotes = async ()=>{
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Failed to fetch notes");
+            const notes = await response.json();
+            renderNotes(notes);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        }
     };
-    try {
-        // Send updated notes to the server
-        const response = await fetch("http://localhost:3000/notes", {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(notes)
+    // Render notes
+    const renderNotes = (notes)=>{
+        notesContainer.innerHTML = ""; // Clear existing notes
+        notes.forEach((note, index)=>{
+            const noteDiv = document.createElement("div");
+            noteDiv.className = "note";
+            noteDiv.innerHTML = `
+        <h3 contenteditable="true" data-id="${index}" class="note-title">${note.title}</h3>
+        <p contenteditable="true" data-id="${index}" class="note-content">${note.content}</p>
+        <button class="save-btn" data-id="${index}">Save</button>
+      `;
+            // Save note changes
+            noteDiv.querySelector(".save-btn").addEventListener("click", async ()=>{
+                const updatedTitle = noteDiv.querySelector(".note-title").textContent.trim();
+                const updatedContent = noteDiv.querySelector(".note-content").textContent.trim();
+                if (!updatedContent) {
+                    alert("Note content cannot be empty!");
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_URL}/${index}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            title: updatedTitle,
+                            content: updatedContent
+                        })
+                    });
+                    if (!response.ok) throw new Error("Failed to save note");
+                    fetchNotes();
+                } catch (error) {
+                    console.error("Error saving note:", error);
+                }
+            });
+            notesContainer.appendChild(noteDiv);
         });
-        if (!response.ok) throw new Error("Failed to save note");
-        // Re-render the note with updated content
-        noteDiv.innerHTML = `
-      <h3>${notes[index].title}</h3>
-      <p>${notes[index].content}</p>
-      <button class="edit-btn" data-id="${index}">Edit</button>
-    `;
-        // Re-add edit listener
-        noteDiv.querySelector(".edit-btn").addEventListener("click", (event)=>{
-            const button = event.target;
-            addEditListeners(button.dataset.id);
-        });
-    } catch (error) {
-        console.error("Error saving note:", error);
-        alert("An error occurred while saving the note.");
-    }
-};
-// Cancel the edit and restore original content
-const cancelEdit = (noteDiv, originalNote)=>{
-    noteDiv.innerHTML = `
-    <h3>${originalNote.title}</h3>
-    <p>${originalNote.content}</p>
-    <button class="edit-btn" data-id="${notes.indexOf(originalNote)}">Edit</button>
-  `;
-    addEditListeners();
-};
+    };
+    // Add new note
+    noteForm.addEventListener("submit", async (event)=>{
+        event.preventDefault();
+        const newNote = {
+            title: noteTitle.value.trim() || "Untitled",
+            content: noteContent.value.trim()
+        };
+        if (!newNote.content) {
+            alert("Note content cannot be empty!");
+            return;
+        }
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newNote)
+            });
+            if (!response.ok) throw new Error("Failed to add note");
+            noteTitle.value = ""; // Clear input
+            noteContent.value = ""; // Clear textarea
+            fetchNotes();
+        } catch (error) {
+            console.error("Error adding note:", error);
+        }
+    });
+    // Initial fetch
+    fetchNotes();
+});
 
 //# sourceMappingURL=index.7c0ccee6.js.map
