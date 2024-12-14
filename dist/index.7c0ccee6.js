@@ -19,7 +19,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
     // Render notes
     const renderNotes = (notes)=>{
         notesContainer.innerHTML = ""; // Clear existing notes
-        notes.forEach((note, index)=>{
+        // Reverse the order of notes to show newest first
+        notes.slice().reverse().forEach((note, index)=>{
             const noteDiv = document.createElement("div");
             noteDiv.className = "note";
             noteDiv.innerHTML = `
@@ -33,9 +34,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
           <input type="text" class="edit-title" value="${note.title || "Untitled"}" />
           <textarea class="edit-content">${note.content}</textarea>
           <button class="save-btn" data-id="${index}">Save</button>
+          <button class="cancel-btn">Cancel</button>
         `;
                 noteDiv.innerHTML = editForm;
-                // Save edited note
+                // Add save functionality
                 noteDiv.querySelector(".save-btn").addEventListener("click", async ()=>{
                     const updatedTitle = noteDiv.querySelector(".edit-title").value.trim();
                     const updatedContent = noteDiv.querySelector(".edit-content").value.trim();
@@ -54,12 +56,20 @@ document.addEventListener("DOMContentLoaded", ()=>{
                                 content: updatedContent
                             })
                         });
-                        if (!response.ok) throw new Error("Failed to save note");
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || "Failed to save note");
+                        }
                         console.log("Note updated successfully");
-                        fetchNotes(); // Refresh the notes
+                        fetchNotes(); // Refresh notes
                     } catch (error) {
                         console.error("Error saving note:", error);
+                        alert("Failed to save the note. Please try again.");
                     }
+                });
+                // Add cancel functionality
+                noteDiv.querySelector(".cancel-btn").addEventListener("click", ()=>{
+                    renderNotes(notes); // Re-render notes to reset the view
                 });
             });
             notesContainer.appendChild(noteDiv);
