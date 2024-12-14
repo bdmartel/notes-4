@@ -3,3 +3,14 @@ notes.json
 .parcel-cache/data.mdb
 dist/index.7c0ccee6.js
 dist/index.7c0ccee6.js.map
+# Ignore .parcel-cache directory and its contents
+.parcel-cache/
+
+# Ignore dist directory
+dist/
+
+# Ignore .mdb files (data.mdb, lock.mdb, etc.)
+*.mdb
+
+# Ignore snapshots
+snapshot-*.txt
