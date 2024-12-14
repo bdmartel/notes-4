@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) throw new Error("Failed to fetch notes");
 
       const notes = await response.json();
+      console.log("Fetched Notes:", notes); // Debugging log
       renderNotes(notes);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -26,40 +27,52 @@ document.addEventListener("DOMContentLoaded", () => {
       const noteDiv = document.createElement("div");
       noteDiv.className = "note";
       noteDiv.innerHTML = `
-        <h3 contenteditable="true" data-id="${index}" class="note-title">${note.title}</h3>
-        <p contenteditable="true" data-id="${index}" class="note-content">${note.content}</p>
-        <button class="save-btn" data-id="${index}">Save</button>
+        <h3>${note.title || "Untitled"}</h3>
+        <p>${note.content}</p>
+        <button class="edit-btn" data-id="${index}">Edit</button>
       `;
 
-      // Save note changes
-      noteDiv.querySelector(".save-btn").addEventListener("click", async () => {
-        const updatedTitle = noteDiv.querySelector(".note-title").textContent.trim();
-        const updatedContent = noteDiv.querySelector(".note-content").textContent.trim();
+      // Add event listener for editing
+      noteDiv.querySelector(".edit-btn").addEventListener("click", () => {
+        const editForm = `
+          <input type="text" class="edit-title" value="${note.title || "Untitled"}" />
+          <textarea class="edit-content">${note.content}</textarea>
+          <button class="save-btn" data-id="${index}">Save</button>
+        `;
+        noteDiv.innerHTML = editForm;
 
-        if (!updatedContent) {
-          alert("Note content cannot be empty!");
-          return;
-        }
+        // Save edited note
+        noteDiv.querySelector(".save-btn").addEventListener("click", async () => {
+          const updatedTitle = noteDiv.querySelector(".edit-title").value.trim();
+          const updatedContent = noteDiv.querySelector(".edit-content").value.trim();
 
-        try {
-          const response = await fetch(`${API_URL}/${index}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: updatedTitle, content: updatedContent }),
-          });
-          if (!response.ok) throw new Error("Failed to save note");
+          if (!updatedContent) {
+            alert("Note content cannot be empty!");
+            return;
+          }
 
-          fetchNotes();
-        } catch (error) {
-          console.error("Error saving note:", error);
-        }
+          try {
+            const response = await fetch(`${API_URL}/${index}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: updatedTitle, content: updatedContent }),
+            });
+
+            if (!response.ok) throw new Error("Failed to save note");
+
+            console.log("Note updated successfully");
+            fetchNotes(); // Refresh the notes
+          } catch (error) {
+            console.error("Error saving note:", error);
+          }
+        });
       });
 
       notesContainer.appendChild(noteDiv);
     });
   };
 
-  // Add new note
+  // Add a new note
   noteForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -82,9 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!response.ok) throw new Error("Failed to add note");
 
-      noteTitle.value = ""; // Clear input
-      noteContent.value = ""; // Clear textarea
-      fetchNotes();
+      console.log("Note added successfully");
+      noteTitle.value = ""; // Clear inputs
+      noteContent.value = "";
+      fetchNotes(); // Refresh notes
     } catch (error) {
       console.error("Error adding note:", error);
     }
