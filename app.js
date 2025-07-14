@@ -33,8 +33,8 @@ const fetchNotes = async () => {
 
     let notes = await response.json();
     
-    // Sort notes by newest first (assuming 'createdAt' field exists)
-    notes = notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Sort notes by newest first using the numeric id
+    notes = notes.sort((a, b) => b.id - a.id);
 
     console.log("Fetched and sorted notes:", notes);
     renderNotes(notes);

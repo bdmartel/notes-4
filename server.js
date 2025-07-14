@@ -9,7 +9,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-const dataFilePath = path.join(__dirname, "notes.json");
+const dataFilePath = process.env.NOTES_FILE || path.join(__dirname, "notes.json");
 
 // Helper: Read notes from the file
 const readNotes = async () => {
@@ -63,8 +63,8 @@ app.post("/notes", async (req, res) => {
   try {
     const notes = await readNotes();
     const newNote = {
-      id: notes.length > 0 ? Math.max(...notes.map((n) => n.id)) + 1 : 1, // Generate unique ID
       ...req.body,
+      id: notes.length > 0 ? Math.max(...notes.map((n) => n.id)) + 1 : 1, // Generate unique ID
     };
 
     notes.push(newNote);
@@ -95,7 +95,11 @@ app.put("/notes/:id", async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
+// Start the server only if this file is run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
