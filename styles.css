@@ -87,3 +87,8 @@ body {
       padding: 0 15px; /* Ensure notes have left-right spacing */
     }
   }
+  #editor-container {
+    height: 200px;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }

@@ -87,4 +87,10 @@ button:hover {
     padding: 0 15px;
   }
 }
+
+#editor-container {
+  border: 1px solid #ccc;
+  height: 200px;
+  padding: 10px;
+}
 /*# sourceMappingURL=index.1303bb05.css.map */

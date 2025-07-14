@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         }
     };
     // Render notes
+    // Render notes
     const renderNotes = (notes)=>{
         notesContainer.innerHTML = ""; // Clear existing notes
         // Reverse the order of notes to show newest first
@@ -24,18 +25,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
             const noteDiv = document.createElement("div");
             noteDiv.className = "note";
             noteDiv.innerHTML = `
-        <h3>${note.title || "Untitled"}</h3>
-        <p>${note.content}</p>
-        <button class="edit-btn" data-id="${index}">Edit</button>
-      `;
+      <h3>${note.title || "Untitled"}</h3>
+      <p>${note.content}</p>
+      <button class="edit-btn" data-id="${index}">Edit</button>
+      <button class="download-btn" data-id="${index}">Download JSON</button>
+    `;
             // Add event listener for editing
             noteDiv.querySelector(".edit-btn").addEventListener("click", ()=>{
                 const editForm = `
-          <input type="text" class="edit-title" value="${note.title || "Untitled"}" />
-          <textarea class="edit-content">${note.content}</textarea>
-          <button class="save-btn" data-id="${index}">Save</button>
-          <button class="cancel-btn">Cancel</button>
-        `;
+        <input type="text" class="edit-title" value="${note.title || "Untitled"}" />
+        <textarea class="edit-content">${note.content}</textarea>
+        <button class="save-btn" data-id="${index}">Save</button>
+        <button class="cancel-btn">Cancel</button>
+      `;
                 noteDiv.innerHTML = editForm;
                 // Add save functionality
                 noteDiv.querySelector(".save-btn").addEventListener("click", async ()=>{
@@ -72,8 +74,28 @@ document.addEventListener("DOMContentLoaded", ()=>{
                     renderNotes(notes); // Re-render notes to reset the view
                 });
             });
+            // Add event listener for downloading JSON
+            noteDiv.querySelector(".download-btn").addEventListener("click", ()=>{
+                downloadJSON(note, `note-${index + 1}.json`);
+            });
             notesContainer.appendChild(noteDiv);
         });
+    };
+    // Download note as JSON
+    const downloadJSON = (data, filename)=>{
+        const jsonBlob = new Blob([
+            JSON.stringify(data, null, 2)
+        ], {
+            type: "application/json"
+        });
+        const url = URL.createObjectURL(jsonBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
     // Add a new note
     noteForm.addEventListener("submit", async (event)=>{
