@@ -1,16 +1,18 @@
+# Node modules
 node_modules/
-notes.json
-.parcel-cache/data.mdb
-dist/index.7c0ccee6.js
-dist/index.7c0ccee6.js.map
-# Ignore .parcel-cache directory and its contents
-.parcel-cache/
 
-# Ignore dist directory
+# Ignore notes and database
+notes.json
+*.mdb
+
+# Parcel cache and build artifacts
+.parcel-cache/
 dist/
 
-# Ignore .mdb files (data.mdb, lock.mdb, etc.)
-*.mdb
+# Ignore specific Parcel-generated files (optional if above lines included)
+# .parcel-cache/data.mdb
+# dist/index.7c0cece6.js
+# dist/index.7c0cece6.js.map
 
 # Ignore snapshots
 snapshot-*.txt
