@@ -1,150 +1,122 @@
-import Quill from "quill";
-import "quill/dist/quill.snow.css";
+import EditorJS from '@editorjs/editorjs';
+import Header from '@editorjs/header';
+import List from '@editorjs/list';
+import edjsHTML from 'editorjs-html';
 
-document.addEventListener("DOMContentLoaded", () => {
-  const notesContainer = document.getElementById("notesContainer");
-  const noteForm = document.getElementById("noteForm");
-  const noteTitle = document.getElementById("noteTitle");
+document.addEventListener('DOMContentLoaded', () => {
+  const notesContainer = document.getElementById('notesContainer');
+  const noteForm = document.getElementById('noteForm');
+  const noteTitle = document.getElementById('noteTitle');
 
-  const API_URL = "http://localhost:3000/notes";
+  const API_URL = 'http://localhost:3000/notes';
 
-  // Initialize Quill editor
-  const quill = new Quill("#editor-container", {
-    theme: "snow",
-    placeholder: "Write your notes here...",
-    modules: {
-      toolbar: [
-        [{ header: [1, 2, false] }],
-        ["bold", "italic", "underline"],
-        ["blockquote", "code-block"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["link", "image"],
-        ["clean"],
-      ],
+  const editor = new EditorJS({
+    holder: 'editor-container',
+    placeholder: 'Write your notes here...',
+    tools: {
+      header: Header,
+      list: List,
     },
   });
 
-// Fetch notes from the API
-const fetchNotes = async () => {
-  console.log("Fetching notes...");
-  try {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error("Failed to fetch notes");
+  const parser = edjsHTML();
 
-    let notes = await response.json();
-    
-    // Sort notes by newest first using the numeric id
-    notes = notes.sort((a, b) => b.id - a.id);
+  const fetchNotes = async () => {
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error('Failed to fetch notes');
+      let notes = await response.json();
+      notes = notes.sort((a, b) => b.id - a.id);
+      renderNotes(notes);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
+  };
 
-    console.log("Fetched and sorted notes:", notes);
-    renderNotes(notes);
-  } catch (error) {
-    console.error("Error fetching notes:", error);
-  }
-};
-
-  // Render notes on the page
   const renderNotes = (notes) => {
-    console.log("Rendering notes:", notes);
-    notesContainer.innerHTML = ""; // Clear existing notes
-
+    notesContainer.innerHTML = '';
     notes.forEach((note) => {
-      console.log(`Rendering note: ${note.title}, ID: ${note.id}`); // Debugging
-      const noteDiv = document.createElement("div");
-      noteDiv.className = "note";
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'note';
+      let htmlContent = note.content;
+      try {
+        const data = JSON.parse(note.content);
+        htmlContent = parser.parse(data).join('');
+      } catch (e) {
+        // assume content is already HTML
+      }
       noteDiv.innerHTML = `
-        <h3>${note.title || "Untitled"}</h3>
-        <div>${note.content}</div>
+        <h3>${note.title || 'Untitled'}</h3>
+        <div>${htmlContent}</div>
         <button class="edit-btn" data-id="${note.id}">Edit</button>
       `;
       notesContainer.appendChild(noteDiv);
     });
 
-    // Add event listeners to "Edit" buttons
-    document.querySelectorAll(".edit-btn").forEach((button) => {
-      button.addEventListener("click", (event) => {
-        const noteId = event.target.getAttribute("data-id");
-        console.log("Edit button clicked, noteId:", noteId);
+    document.querySelectorAll('.edit-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        const noteId = event.target.getAttribute('data-id');
         loadNoteForEditing(noteId);
       });
     });
   };
 
-  // Load a note for editing
   const loadNoteForEditing = async (noteId) => {
-    if (!noteId) {
-      console.error("Note ID is undefined, cannot load for editing");
-      return; // Stop execution if noteId is invalid
-    }
-
-    console.log(`Loading note for editing: ${noteId}`);
+    if (!noteId) return;
     try {
       const response = await fetch(`${API_URL}/${noteId}`);
-      if (!response.ok) throw new Error("Failed to fetch the note");
-
+      if (!response.ok) throw new Error('Failed to fetch the note');
       const note = await response.json();
-      console.log("Loaded Note:", note);
-
-      // Populate form fields
-      document.getElementById("noteTitle").value = note.title;
-      quill.setContents(quill.clipboard.convert(note.content));
-
-      // Store the note ID for updating later
-      noteForm.setAttribute("data-edit-id", noteId);
+      noteTitle.value = note.title;
+      await editor.clear();
+      let data;
+      try {
+        data = JSON.parse(note.content);
+      } catch (e) {
+        data = { blocks: [{ type: 'paragraph', data: { text: note.content } }] };
+      }
+      await editor.render(data);
+      noteForm.setAttribute('data-edit-id', noteId);
     } catch (error) {
-      console.error("Error loading note for editing:", error);
+      console.error('Error loading note for editing:', error);
     }
   };
 
-  // Handle form submission (Add or Edit)
-  noteForm.addEventListener("submit", async (event) => {
+  noteForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const noteId = noteForm.getAttribute("data-edit-id"); // Check if editing
+    const noteId = noteForm.getAttribute('data-edit-id');
+    const savedData = await editor.save();
     const newNote = {
       title: noteTitle.value.trim(),
-      content: quill.root.innerHTML,
+      content: JSON.stringify(savedData),
     };
 
-    if (!newNote.content || newNote.content === "<p><br></p>") {
-      alert("Note content cannot be empty!");
+    if (!savedData.blocks.length) {
+      alert('Note content cannot be empty!');
       return;
     }
 
-    console.log("Submitting note:", newNote);
-    console.log("Note ID (if editing):", noteId);
-
     try {
-      const url = noteId
-        ? `${API_URL}/${noteId}` // Update existing note
-        : API_URL; // Add new note
-
-      const method = noteId ? "PUT" : "POST";
-
-      console.log("Request URL:", url, "Method:", method);
+      const url = noteId ? `${API_URL}/${noteId}` : API_URL;
+      const method = noteId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newNote),
       });
 
-      console.log("Response status:", response.status);
+      if (!response.ok) throw new Error(noteId ? 'Failed to update note' : 'Failed to add note');
 
-      if (!response.ok) throw new Error(noteId ? "Failed to update note" : "Failed to add note");
-
-      console.log(noteId ? "Note updated successfully" : "Note added successfully");
-
-      // Clear form and refresh notes
-      noteTitle.value = "";
-      quill.setContents([]);
-      noteForm.removeAttribute("data-edit-id"); // Clear edit mode
-      fetchNotes(); // Refresh the notes
+      noteTitle.value = '';
+      await editor.clear();
+      noteForm.removeAttribute('data-edit-id');
+      fetchNotes();
     } catch (error) {
-      console.error("Error saving note:", error);
+      console.error('Error saving note:', error);
     }
   });
 
-  // Initial fetch to load existing notes
   fetchNotes();
 });
