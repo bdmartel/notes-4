@@ -51,13 +51,62 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="edit-btn" data-id="${note.id}">Edit</button>
       `;
       notesContainer.appendChild(noteDiv);
+      noteDiv.addEventListener('click', (event) => {
+        if (event.target.classList.contains('edit-btn')) {
+          const noteId = event.target.getAttribute('data-id');
+          loadNoteForEditing(noteId);
+        } else {
+          openInlineEditor(note, noteDiv);
+        }
+      });
+    });
+  };
+
+  const parseContent = (content) => {
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      const text = content.replace(/<[^>]*>?/gm, '');
+      return { blocks: [{ type: 'paragraph', data: { text } }] };
+    }
+  };
+
+  const openInlineEditor = (note, noteDiv) => {
+    const holderId = `inline-editor-${note.id}`;
+    noteDiv.innerHTML = `
+      <input type="text" class="inline-title" value="${note.title || ''}" />
+      <div id="${holderId}" class="inline-editor"></div>
+      <button class="save-inline">Save</button>
+      <button class="cancel-inline">Cancel</button>
+    `;
+
+    const inlineEditor = new EditorJS({
+      holder: holderId,
+      tools: { header: Header, list: List },
+      data: parseContent(note.content),
     });
 
-    document.querySelectorAll('.edit-btn').forEach((button) => {
-      button.addEventListener('click', (event) => {
-        const noteId = event.target.getAttribute('data-id');
-        loadNoteForEditing(noteId);
-      });
+    noteDiv.querySelector('.save-inline').addEventListener('click', async () => {
+      const savedData = await inlineEditor.save();
+      const updatedNote = {
+        title: noteDiv.querySelector('.inline-title').value.trim(),
+        content: JSON.stringify(savedData),
+      };
+      try {
+        const response = await fetch(`${API_URL}/${note.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedNote),
+        });
+        if (!response.ok) throw new Error('Failed to update note');
+        fetchNotes();
+      } catch (error) {
+        console.error('Error saving note:', error);
+      }
+    });
+
+    noteDiv.querySelector('.cancel-inline').addEventListener('click', () => {
+      fetchNotes();
     });
   };
 
