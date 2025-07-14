@@ -78,7 +78,7 @@ body {
       padding: 10px;
     }
   
-    form, #notes {
+    form, #notesContainer {
       max-width: 100%;
       margin: 0 15px; /* Add left-right margins */
     }
